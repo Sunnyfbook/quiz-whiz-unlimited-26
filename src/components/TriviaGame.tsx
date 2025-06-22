@@ -19,7 +19,7 @@ interface Question {
 const TriviaGame = () => {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [score, setScore] = useState(0);
+  const [score, setScore] = useState(30);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [timeLeft, setTimeLeft] = useState(15);
   const [isActive, setIsActive] = useState(false);
@@ -32,9 +32,9 @@ const TriviaGame = () => {
 
   const triviaQuestions: Question[] = [
     {
-      question: "What is the capital of France?",
-      options: ["London", "Berlin", "Paris", "Madrid"],
-      correctAnswer: 2,
+      question: "Which of the following is NOT a benefit of geothermal energy?",
+      options: ["Geothermal power", "Radioactive waste deposits", "Soil fertilization", "Glacier melting"],
+      correctAnswer: 1,
       category: "Geography",
       difficulty: "Easy"
     },
@@ -178,7 +178,6 @@ const TriviaGame = () => {
       setSpeechEnabled(true);
       setGameStarted(true);
       setIsActive(true);
-      setScore(0);
       setTotalQuestions(0);
       setStreak(0);
       
@@ -217,7 +216,7 @@ const TriviaGame = () => {
     setIsCorrect(correct);
     
     if (correct) {
-      setScore(prev => prev + 1);
+      setScore(prev => prev + 10);
       setStreak(prev => prev + 1);
       setShowConfetti(true);
       
@@ -304,105 +303,116 @@ const TriviaGame = () => {
 
   if (!gameStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-900 via-purple-900 to-fuchsia-900 flex items-center justify-center p-4 overflow-hidden relative">
-        <ParticleSystem />
-        
-        <Card className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl animate-scale-in relative z-10">
-          <CardContent className="p-8 text-center">
-            <div className="mb-8">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
-                <Brain className="w-10 h-10 text-white animate-pulse" />
-              </div>
-              <h1 className="text-5xl font-bold text-white mb-3 bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 bg-clip-text text-transparent animate-shimmer">
-                Trivia Master
-              </h1>
-              <p className="text-white/80 text-lg font-medium">Challenge Your Mind!</p>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-800 via-blue-900 to-purple-900 flex items-center justify-center p-4 relative">
+        <div className="w-full max-w-md bg-blue-900/80 backdrop-blur-xl border border-blue-600/50 rounded-3xl shadow-2xl p-8 text-center animate-scale-in">
+          <div className="mb-8">
+            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+              <Brain className="w-10 h-10 text-white" />
             </div>
-            
-            <div className="space-y-4 text-white/70 text-base mb-8">
-              <div className="flex items-center justify-center gap-3 p-3 bg-white/5 rounded-lg backdrop-blur-sm hover:bg-white/10 transition-colors">
-                <Trophy className="w-5 h-5 text-yellow-400 animate-pulse" />
-                <span>Unlimited Questions</span>
-              </div>
-              <div className="flex items-center justify-center gap-3 p-3 bg-white/5 rounded-lg backdrop-blur-sm hover:bg-white/10 transition-colors">
-                <Zap className="w-5 h-5 text-blue-400 animate-pulse" />
-                <span>15 Seconds Per Question</span>
-              </div>
-              <div className="flex items-center justify-center gap-3 p-3 bg-white/5 rounded-lg backdrop-blur-sm hover:bg-white/10 transition-colors">
-                <Volume2 className="w-5 h-5 text-green-400 animate-pulse" />
-                <span>Voice Narration</span>
-              </div>
-            </div>
-            
-            <div className="text-white/60 text-sm animate-pulse">
-              <Sparkles className="w-5 h-5 inline mr-2 animate-spin" />
-              Starting in 3 seconds...
-            </div>
-          </CardContent>
-        </Card>
+            <h1 className="text-4xl font-bold text-white mb-3">
+              Trivia Master
+            </h1>
+            <p className="text-blue-200 text-lg">Challenge Your Mind!</p>
+          </div>
+          
+          <div className="text-blue-200 text-sm animate-pulse">
+            Starting in 3 seconds...
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-900 via-purple-900 to-fuchsia-900 p-4 relative overflow-hidden">
-      <ParticleSystem />
-      
-      {showConfetti && <ParticleSystem type="confetti" />}
-      
-      <div className="max-w-4xl mx-auto relative z-10">
-        {/* Enhanced Header with Controls */}
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="flex justify-between items-center mb-4">
-            <ScoreCounter score={score} totalQuestions={totalQuestions} streak={streak} />
-            
-            <Button
-              onClick={toggleSpeech}
-              variant="ghost"
-              size="sm"
-              className="text-white/80 hover:text-white hover:bg-white/10"
-            >
-              {speechEnabled ? (
-                <Volume2 className="w-5 h-5" />
-              ) : (
-                <VolumeX className="w-5 h-5" />
-              )}
-            </Button>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-800 via-blue-900 to-purple-900 p-4 relative">
+      <div className="max-w-4xl mx-auto">
+        {/* Header with Score */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-6 py-3 rounded-full font-bold text-2xl shadow-lg">
+            💰 {score}
           </div>
           
-          <h1 className="text-6xl font-bold text-white mb-4 bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 bg-clip-text text-transparent animate-shimmer">
-            Trivia Master
-          </h1>
+          <Button
+            onClick={toggleSpeech}
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-blue-700/50 rounded-full p-3"
+          >
+            {speechEnabled ? (
+              <Volume2 className="w-6 h-6" />
+            ) : (
+              <VolumeX className="w-6 h-6" />
+            )}
+          </Button>
         </div>
 
         {currentQuestion && (
-          <>
-            {/* Enhanced Progress Bar */}
-            <div className="space-y-4 animate-slide-in-right mb-8">
-              <div className="flex justify-between items-center text-white/90 text-lg font-semibold">
-                <span className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Time Remaining
-                </span>
-                <span className={`font-mono text-xl ${timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
+          <div className="space-y-6">
+            {/* Host Video Section */}
+            <div className="bg-blue-900/80 rounded-2xl p-6 border border-blue-600/50 backdrop-blur-sm">
+              <div className="bg-gray-800 rounded-xl h-48 flex items-center justify-center mb-4 overflow-hidden">
+                <img 
+                  src="/lovable-uploads/29e12f2f-c724-4eb3-9058-4dee9240fd6d.png" 
+                  alt="Host" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h2 className="text-white text-xl font-semibold text-center mb-2">
+                {currentQuestion.question}
+              </h2>
+            </div>
+
+            {/* Answer Options */}
+            <div className="space-y-3">
+              {currentQuestion.options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnswerSelect(index)}
+                  disabled={showAnswer}
+                  className={`w-full p-4 rounded-full text-left font-medium transition-all duration-300 border-2 ${
+                    showAnswer
+                      ? index === currentQuestion.correctAnswer
+                        ? 'bg-green-600 border-green-500 text-white'
+                        : selectedAnswer === index
+                        ? 'bg-red-600 border-red-500 text-white'
+                        : 'bg-blue-800/50 border-blue-600/50 text-blue-200'
+                      : selectedAnswer === index
+                      ? 'bg-blue-600 border-blue-400 text-white'
+                      : 'bg-blue-800/50 border-blue-600/50 text-white hover:bg-blue-700/50 hover:border-blue-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      showAnswer && index === currentQuestion.correctAnswer
+                        ? 'bg-green-500 text-white'
+                        : selectedAnswer === index && showAnswer && index !== currentQuestion.correctAnswer
+                        ? 'bg-red-500 text-white'
+                        : selectedAnswer === index
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-blue-600 text-white'
+                    }`}>
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    <span className="text-lg">{option}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Timer */}
+            <div className="bg-blue-900/80 rounded-xl p-4 border border-blue-600/50">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-white font-medium">Time Remaining:</span>
+                <span className={`font-bold text-xl ${timeLeft <= 5 ? 'text-red-400' : 'text-white'}`}>
                   {timeLeft}s
                 </span>
               </div>
               <Progress 
                 value={(timeLeft / 15) * 100} 
-                className={`h-4 bg-white/10 transition-all duration-1000 ${timeLeft <= 5 ? 'animate-pulse' : ''}`}
+                className="h-3 bg-blue-800"
               />
             </div>
-
-            {/* Enhanced Question Card */}
-            <QuestionCard
-              question={currentQuestion}
-              selectedAnswer={selectedAnswer}
-              showAnswer={showAnswer}
-              isCorrect={isCorrect}
-              onAnswerSelect={handleAnswerSelect}
-            />
-          </>
+          </div>
         )}
       </div>
     </div>
