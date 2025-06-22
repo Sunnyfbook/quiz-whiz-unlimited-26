@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Volume2, VolumeX, Play, Pause, Sparkles, Trophy, Target, Zap, Brain, Clock } from 'lucide-react';
+import { Sparkles, Trophy, Target, Zap, Brain, Clock } from 'lucide-react';
 
 interface Question {
   question: string;
@@ -20,10 +21,10 @@ const TriviaGame = () => {
   const [timeLeft, setTimeLeft] = useState(15);
   const [isActive, setIsActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [speechEnabled, setSpeechEnabled] = useState(false);
 
   // Sample trivia questions with enhanced data
   const triviaQuestions: Question[] = [
@@ -99,16 +100,14 @@ const TriviaGame = () => {
     }
   ];
 
-  // Enhanced text-to-speech function with better error handling
+  // Enhanced text-to-speech function with user interaction requirement
   const speak = useCallback((text: string) => {
-    if (!soundEnabled) return;
+    if (!speechEnabled) return;
     
     try {
-      // Cancel any ongoing speech
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         
-        // Wait a bit for cancellation to complete
         setTimeout(() => {
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.rate = 0.9;
@@ -116,7 +115,6 @@ const TriviaGame = () => {
           utterance.volume = 0.8;
           utterance.lang = 'en-US';
           
-          // Add some personality to the voice
           const voices = window.speechSynthesis.getVoices();
           const preferredVoice = voices.find(voice => 
             voice.name.includes('Google') || 
@@ -133,7 +131,7 @@ const TriviaGame = () => {
     } catch (error) {
       console.log('Text-to-speech not available:', error);
     }
-  }, [soundEnabled]);
+  }, [speechEnabled]);
 
   // Get random question with better distribution
   const getRandomQuestion = useCallback(() => {
@@ -161,8 +159,9 @@ const TriviaGame = () => {
     }, 1500);
   }, [getRandomQuestion, speak]);
 
-  // Start game with fanfare
-  const startGame = useCallback(() => {
+  // Enable speech and start game
+  const enableSpeechAndStart = useCallback(() => {
+    setSpeechEnabled(true);
     setGameStarted(true);
     setIsActive(true);
     setScore(0);
@@ -217,9 +216,6 @@ const TriviaGame = () => {
       interval = setInterval(() => {
         setTimeLeft(timeLeft => {
           const newTime = timeLeft - 1;
-          if (newTime <= 3 && newTime > 0) {
-            // Urgency beep (you could add audio file here)
-          }
           return newTime;
         });
       }, 1000);
@@ -234,11 +230,11 @@ const TriviaGame = () => {
   // Auto-start game with dramatic countdown
   useEffect(() => {
     const timer = setTimeout(() => {
-      startGame();
+      enableSpeechAndStart();
     }, 3000);
     
     return () => clearTimeout(timer);
-  }, [startGame]);
+  }, [enableSpeechAndStart]);
 
   // Load voices when speech synthesis is ready
   useEffect(() => {
@@ -325,7 +321,7 @@ const TriviaGame = () => {
                 <span>15 Seconds Per Question</span>
               </div>
               <div className="flex items-center justify-center gap-3 p-3 bg-white/5 rounded-lg backdrop-blur-sm">
-                <Volume2 className="w-5 h-5 text-green-400" />
+                <Brain className="w-5 h-5 text-green-400" />
                 <span>Voice Narration</span>
               </div>
             </div>
@@ -374,27 +370,6 @@ const TriviaGame = () => {
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
             Trivia Master
           </h1>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-6 text-white/90">
-            <div className="flex items-center gap-6 bg-white/10 backdrop-blur-md rounded-full px-6 py-3 border border-white/20">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-yellow-400" />
-                <span className="text-lg font-semibold">Score: <span className="text-yellow-400">{score}</span></span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Target className="w-5 h-5 text-blue-400" />
-                <span className="text-lg font-semibold">Questions: <span className="text-blue-400">{totalQuestions}</span></span>
-              </div>
-            </div>
-            <Button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/10 border border-white/20 rounded-full px-4 py-2 backdrop-blur-md"
-            >
-              {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-              <span className="ml-2">{soundEnabled ? 'Sound On' : 'Sound Off'}</span>
-            </Button>
-          </div>
         </div>
 
         {/* Main Game Area */}
@@ -443,9 +418,6 @@ const TriviaGame = () => {
                         {getDifficultyConfig(currentQuestion.difficulty).icon}
                         {currentQuestion.difficulty}
                       </div>
-                    </div>
-                    <div className="text-white/60 text-base font-medium bg-white/5 px-4 py-2 rounded-full backdrop-blur-sm">
-                      Question #{totalQuestions + 1}
                     </div>
                   </div>
                   
