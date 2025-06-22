@@ -6,6 +6,7 @@ import { Sparkles, Trophy, Target, Zap, Brain, Clock, Volume2, VolumeX, Star, He
 import { ParticleSystem } from './ParticleSystem';
 import { ScoreCounter } from './ScoreCounter';
 import { QuestionCard } from './QuestionCard';
+import { useTextToSpeech } from '../services/TextToSpeechService';
 
 interface Question {
   question: string;
@@ -25,9 +26,10 @@ const TriviaGame = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [speechEnabled, setSpeechEnabled] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [streak, setStreak] = useState(0);
+
+  const { speak, isEnabled: speechEnabled, toggle: toggleSpeech } = useTextToSpeech();
 
   const triviaQuestions: Question[] = [
     {
@@ -102,58 +104,12 @@ const TriviaGame = () => {
     }
   ];
 
-  // Fixed text-to-speech function
-  const speak = useCallback((text: string) => {
-    if (!speechEnabled) return;
-    
-    try {
-      if ('speechSynthesis' in window) {
-        // Cancel any existing speech
-        window.speechSynthesis.cancel();
-        
-        // Small delay to ensure cancellation is processed
-        setTimeout(() => {
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.rate = 0.9;
-          utterance.pitch = 1.1;
-          utterance.volume = 0.8;
-          utterance.lang = 'en-US';
-          
-          // Get available voices and set preferred one
-          const voices = window.speechSynthesis.getVoices();
-          const preferredVoice = voices.find(voice => 
-            voice.name.toLowerCase().includes('google') || 
-            voice.name.toLowerCase().includes('microsoft') ||
-            voice.lang.includes('en-US')
-          );
-          
-          if (preferredVoice) {
-            utterance.voice = preferredVoice;
-          }
-          
-          // Error handling for speech synthesis
-          utterance.onerror = (event) => {
-            console.log('Speech synthesis error:', event.error);
-          };
-          
-          utterance.onend = () => {
-            console.log('Speech synthesis finished');
-          };
-          
-          window.speechSynthesis.speak(utterance);
-        }, 150);
-      }
-    } catch (error) {
-      console.log('Text-to-speech error:', error);
-    }
-  }, [speechEnabled]);
-
   const getRandomQuestion = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * triviaQuestions.length);
     return triviaQuestions[randomIndex];
   }, []);
 
-  const loadNewQuestion = useCallback(() => {
+  const loadNewQuestion = useCallback(async () => {
     setSelectedAnswer(null);
     setShowConfetti(false);
     setIsCorrect(false);
@@ -163,35 +119,28 @@ const TriviaGame = () => {
     setShowAnswer(false);
     setTimeLeft(15);
     
-    // Improved speech timing
-    setTimeout(() => {
+    // Use the new TTS service
+    setTimeout(async () => {
       if (speechEnabled) {
-        speak(`${newQuestion.category} question: ${newQuestion.question}`);
+        await speak(`${newQuestion.category} question: ${newQuestion.question}`);
       }
     }, 500);
   }, [getRandomQuestion, speak, speechEnabled]);
 
-  const enableSpeechAndStart = useCallback(() => {
-    // Request user interaction for speech
-    const startSpeech = () => {
-      setSpeechEnabled(true);
-      setGameStarted(true);
-      setIsActive(true);
-      setTotalQuestions(0);
-      setStreak(0);
-      
-      // Test speech synthesis
-      if ('speechSynthesis' in window) {
-        speak("Welcome to Trivia Master! Get ready to test your knowledge!");
-      }
-      
-      setTimeout(() => {
-        loadNewQuestion();
-      }, 2000);
-    };
-
-    startSpeech();
-  }, [loadNewQuestion, speak]);
+  const enableSpeechAndStart = useCallback(async () => {
+    setGameStarted(true);
+    setIsActive(true);
+    setTotalQuestions(0);
+    setStreak(0);
+    
+    if (speechEnabled) {
+      await speak("Welcome to Trivia Master! Get ready to test your knowledge!");
+    }
+    
+    setTimeout(() => {
+      loadNewQuestion();
+    }, 2000);
+  }, [loadNewQuestion, speak, speechEnabled]);
 
   const handleAnswerSelect = useCallback((answerIndex: number) => {
     if (showAnswer || !currentQuestion) return;
@@ -204,7 +153,7 @@ const TriviaGame = () => {
     }, 500);
   }, [showAnswer, currentQuestion]);
 
-  const revealAnswer = useCallback((selectedIndex?: number) => {
+  const revealAnswer = useCallback(async (selectedIndex?: number) => {
     if (!currentQuestion) return;
     
     setShowAnswer(true);
@@ -227,13 +176,13 @@ const TriviaGame = () => {
           "Brilliant! Keep it up!"
         ];
         const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
-        speak(randomEncouragement);
+        await speak(randomEncouragement);
       }
     } else {
       setStreak(0);
       const correctAnswerText = currentQuestion.options[currentQuestion.correctAnswer];
       if (speechEnabled) {
-        speak(`Not quite right. The correct answer is: ${correctAnswerText}`);
+        await speak(`Not quite right. The correct answer is: ${correctAnswerText}`);
       }
     }
     
@@ -275,30 +224,6 @@ const TriviaGame = () => {
     
     return () => clearTimeout(timer);
   }, [enableSpeechAndStart]);
-
-  // Load voices when available
-  useEffect(() => {
-    if ('speechSynthesis' in window) {
-      const loadVoices = () => {
-        const voices = window.speechSynthesis.getVoices();
-        console.log('Available voices:', voices.length);
-      };
-      
-      if (window.speechSynthesis.onvoiceschanged !== undefined) {
-        window.speechSynthesis.onvoiceschanged = loadVoices;
-      }
-      
-      // Also load immediately in case voices are already available
-      setTimeout(loadVoices, 100);
-    }
-  }, []);
-
-  const toggleSpeech = () => {
-    setSpeechEnabled(!speechEnabled);
-    if (!speechEnabled) {
-      speak("Text to speech enabled!");
-    }
-  };
 
   if (!gameStarted) {
     return (
