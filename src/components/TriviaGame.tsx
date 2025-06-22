@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -303,19 +302,19 @@ const TriviaGame = () => {
 
   if (!gameStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-800 via-blue-900 to-purple-900 flex items-center justify-center p-4 relative">
-        <div className="w-full max-w-md bg-blue-900/80 backdrop-blur-xl border border-blue-600/50 rounded-3xl shadow-2xl p-8 text-center animate-scale-in">
-          <div className="mb-8">
-            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
-              <Brain className="w-10 h-10 text-white" />
+      <div className="min-h-screen bg-gradient-to-br from-indigo-800 via-blue-900 to-purple-900 flex items-center justify-center p-2 relative">
+        <div className="w-full max-w-sm bg-blue-900/80 backdrop-blur-xl border border-blue-600/50 rounded-3xl shadow-2xl p-6 text-center animate-scale-in">
+          <div className="mb-6">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+              <Brain className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-white mb-3">
+            <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">
               Trivia Master
             </h1>
-            <p className="text-blue-200 text-lg">Challenge Your Mind!</p>
+            <p className="text-blue-200 text-sm md:text-lg">Challenge Your Mind!</p>
           </div>
           
-          <div className="text-blue-200 text-sm animate-pulse">
+          <div className="text-blue-200 text-xs md:text-sm animate-pulse">
             Starting in 3 seconds...
           </div>
         </div>
@@ -324,11 +323,11 @@ const TriviaGame = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-800 via-blue-900 to-purple-900 p-4 relative">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-800 via-blue-900 to-purple-900 p-2 md:p-4 relative flex flex-col">
+      <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
         {/* Header with Score */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-6 py-3 rounded-full font-bold text-2xl shadow-lg">
+        <div className="flex justify-between items-center mb-3 md:mb-6">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-3 py-2 md:px-6 md:py-3 rounded-full font-bold text-lg md:text-2xl shadow-lg">
             💰 {score}
           </div>
           
@@ -336,40 +335,40 @@ const TriviaGame = () => {
             onClick={toggleSpeech}
             variant="ghost"
             size="sm"
-            className="text-white hover:bg-blue-700/50 rounded-full p-3"
+            className="text-white hover:bg-blue-700/50 rounded-full p-2 md:p-3"
           >
             {speechEnabled ? (
-              <Volume2 className="w-6 h-6" />
+              <Volume2 className="w-5 h-5 md:w-6 md:h-6" />
             ) : (
-              <VolumeX className="w-6 h-6" />
+              <VolumeX className="w-5 h-5 md:w-6 md:h-6" />
             )}
           </Button>
         </div>
 
         {currentQuestion && (
-          <div className="space-y-6">
+          <div className="space-y-3 md:space-y-6 flex-1 flex flex-col">
             {/* Host Video Section */}
-            <div className="bg-blue-900/80 rounded-2xl p-6 border border-blue-600/50 backdrop-blur-sm">
-              <div className="bg-gray-800 rounded-xl h-48 flex items-center justify-center mb-4 overflow-hidden">
+            <div className="bg-blue-900/80 rounded-2xl p-3 md:p-6 border border-blue-600/50 backdrop-blur-sm">
+              <div className="bg-gray-800 rounded-xl h-32 md:h-48 flex items-center justify-center mb-3 md:mb-4 overflow-hidden">
                 <img 
                   src="/lovable-uploads/29e12f2f-c724-4eb3-9058-4dee9240fd6d.png" 
                   alt="Host" 
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h2 className="text-white text-xl font-semibold text-center mb-2">
+              <h2 className="text-white text-sm md:text-xl font-semibold text-center mb-2 leading-tight">
                 {currentQuestion.question}
               </h2>
             </div>
 
             {/* Answer Options */}
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3 flex-1">
               {currentQuestion.options.map((option, index) => (
                 <button
                   key={index}
                   onClick={() => handleAnswerSelect(index)}
                   disabled={showAnswer}
-                  className={`w-full p-4 rounded-full text-left font-medium transition-all duration-300 border-2 ${
+                  className={`w-full p-3 md:p-4 rounded-full text-left font-medium transition-all duration-300 border-2 ${
                     showAnswer
                       ? index === currentQuestion.correctAnswer
                         ? 'bg-green-600 border-green-500 text-white'
@@ -381,8 +380,8 @@ const TriviaGame = () => {
                       : 'bg-blue-800/50 border-blue-600/50 text-white hover:bg-blue-700/50 hover:border-blue-500'
                   }`}
                 >
-                  <div className="flex items-center gap-4">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  <div className="flex items-center gap-2 md:gap-4">
+                    <span className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm font-bold ${
                       showAnswer && index === currentQuestion.correctAnswer
                         ? 'bg-green-500 text-white'
                         : selectedAnswer === index && showAnswer && index !== currentQuestion.correctAnswer
@@ -393,23 +392,23 @@ const TriviaGame = () => {
                     }`}>
                       {String.fromCharCode(65 + index)}
                     </span>
-                    <span className="text-lg">{option}</span>
+                    <span className="text-sm md:text-lg leading-tight">{option}</span>
                   </div>
                 </button>
               ))}
             </div>
 
             {/* Timer */}
-            <div className="bg-blue-900/80 rounded-xl p-4 border border-blue-600/50">
+            <div className="bg-blue-900/80 rounded-xl p-3 md:p-4 border border-blue-600/50 mt-auto">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-white font-medium">Time Remaining:</span>
-                <span className={`font-bold text-xl ${timeLeft <= 5 ? 'text-red-400' : 'text-white'}`}>
+                <span className="text-white font-medium text-sm md:text-base">Time Remaining:</span>
+                <span className={`font-bold text-lg md:text-xl ${timeLeft <= 5 ? 'text-red-400' : 'text-white'}`}>
                   {timeLeft}s
                 </span>
               </div>
               <Progress 
                 value={(timeLeft / 15) * 100} 
-                className="h-3 bg-blue-800"
+                className="h-2 md:h-3 bg-blue-800"
               />
             </div>
           </div>
