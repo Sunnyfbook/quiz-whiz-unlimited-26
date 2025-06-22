@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useTextToSpeech } from '../services/TextToSpeechService';
 
@@ -21,9 +22,9 @@ export const useGameLogic = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [streak, setStreak] = useState(0);
-  const [canSpeak, setCanSpeak] = useState(true);
+  const [speechInProgress, setSpeechInProgress] = useState(false);
 
-  const { speak, speakQuestion, isEnabled: speechEnabled, toggle: toggleSpeech, stopSpeaking } = useTextToSpeech();
+  const { speak, speakQuestion, isEnabled: speechEnabled, toggle: toggleSpeech } = useTextToSpeech();
 
   const triviaQuestions: Question[] = [
     {
@@ -108,30 +109,33 @@ export const useGameLogic = () => {
     setSelectedAnswer(null);
     setShowConfetti(false);
     setIsCorrect(false);
-    setCanSpeak(true);
+    setSpeechInProgress(false);
     
     const newQuestion = getRandomQuestion();
     setCurrentQuestion(newQuestion);
     setShowAnswer(false);
     setTimeLeft(15);
     
-    // Wait for UI to update, then speak the question and answers
-    if (speechEnabled && newQuestion && canSpeak) {
+    // Speak the question after a short delay to ensure UI is ready
+    if (speechEnabled && newQuestion) {
       setTimeout(async () => {
-        console.log('Attempting to speak question - speech enabled:', speechEnabled);
+        console.log('Starting question speech');
+        setSpeechInProgress(true);
         try {
           await speakQuestion(newQuestion.question, newQuestion.options);
         } catch (error) {
           console.error('Error speaking question:', error);
+        } finally {
+          setSpeechInProgress(false);
         }
-      }, 1000);
+      }, 1500);
     }
-  }, [getRandomQuestion, speakQuestion, speechEnabled, canSpeak]);
+  }, [getRandomQuestion, speakQuestion, speechEnabled]);
 
   const revealAnswer = useCallback(async (selectedIndex?: number) => {
     if (!currentQuestion) return;
     
-    setCanSpeak(false);
+    setSpeechInProgress(true);
     setShowAnswer(true);
     setIsActive(false);
     setTotalQuestions(prev => prev + 1);
@@ -152,45 +156,58 @@ export const useGameLogic = () => {
           "Brilliant! Keep it up!"
         ];
         const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
-        setTimeout(() => {
-          speak(randomEncouragement, 'high');
+        setTimeout(async () => {
+          try {
+            await speak(randomEncouragement, 'high');
+          } catch (error) {
+            console.error('Error speaking encouragement:', error);
+          }
         }, 500);
       }
     } else {
       setStreak(0);
       const correctAnswerText = currentQuestion.options[currentQuestion.correctAnswer];
       if (speechEnabled) {
-        setTimeout(() => {
-          speak(`Incorrect. The correct answer is ${String.fromCharCode(65 + currentQuestion.correctAnswer)}: ${correctAnswerText}`, 'high');
+        setTimeout(async () => {
+          try {
+            await speak(`Incorrect. The correct answer is ${String.fromCharCode(65 + currentQuestion.correctAnswer)}: ${correctAnswerText}`, 'high');
+          } catch (error) {
+            console.error('Error speaking correct answer:', error);
+          }
         }, 500);
       }
     }
     
     setTimeout(() => {
+      setSpeechInProgress(false);
       loadNewQuestion();
       setIsActive(true);
     }, 4000);
   }, [currentQuestion, speak, speechEnabled, loadNewQuestion]);
 
   const handleAnswerSelect = useCallback((answerIndex: number) => {
-    if (showAnswer || !currentQuestion) return;
+    if (showAnswer || !currentQuestion || speechInProgress) return;
     
     console.log('Answer selected:', answerIndex);
     setSelectedAnswer(answerIndex);
     setIsActive(false);
-    setCanSpeak(false);
+    setSpeechInProgress(true);
     
     if (speechEnabled) {
       const selectedOption = currentQuestion.options[answerIndex];
-      setTimeout(() => {
-        speak(`You selected ${String.fromCharCode(65 + answerIndex)}: ${selectedOption}`, 'high');
+      setTimeout(async () => {
+        try {
+          await speak(`You selected ${String.fromCharCode(65 + answerIndex)}: ${selectedOption}`, 'high');
+        } catch (error) {
+          console.error('Error speaking selection:', error);
+        }
       }, 200);
     }
     
     setTimeout(() => {
       revealAnswer(answerIndex);
     }, 1500);
-  }, [showAnswer, currentQuestion, revealAnswer, speak, speechEnabled]);
+  }, [showAnswer, currentQuestion, speechInProgress, revealAnswer, speak, speechEnabled]);
 
   const enableSpeechAndStart = useCallback(async () => {
     console.log('Starting game...');
@@ -198,19 +215,24 @@ export const useGameLogic = () => {
     setIsActive(true);
     setTotalQuestions(0);
     setStreak(0);
-    setCanSpeak(true);
+    setSpeechInProgress(false);
     
     if (speechEnabled) {
-      await speak("Welcome to Trivia Master! Get ready to test your knowledge!", 'high');
-      setTimeout(() => {
+      try {
+        await speak("Welcome to Trivia Master! Get ready to test your knowledge!", 'high');
+        setTimeout(() => {
+          loadNewQuestion();
+        }, 2000);
+      } catch (error) {
+        console.error('Error speaking welcome:', error);
         loadNewQuestion();
-      }, 2000);
+      }
     } else {
       loadNewQuestion();
     }
   }, [loadNewQuestion, speak, speechEnabled]);
 
-  // Timer effect - prevent timer messages from interrupting speech
+  // Timer effect - only speak time warnings if not currently speaking questions
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
@@ -218,16 +240,16 @@ export const useGameLogic = () => {
       interval = setInterval(() => {
         setTimeLeft(timeLeft => {
           const newTime = timeLeft - 1;
-          // Only speak time warnings if not currently speaking questions/answers
-          if (newTime === 5 && speechEnabled && canSpeak) {
-            speak("Five seconds remaining!", 'normal');
+          // Only speak time warnings if speech is not in progress
+          if (newTime === 5 && speechEnabled && !speechInProgress) {
+            speak("Five seconds remaining!", 'normal').catch(console.error);
           }
           return newTime;
         });
       }, 1000);
     } else if (timeLeft === 0 && !showAnswer) {
-      if (speechEnabled && canSpeak) {
-        speak("Time's up!", 'high');
+      if (speechEnabled && !speechInProgress) {
+        speak("Time's up!", 'high').catch(console.error);
       }
       setTimeout(() => {
         revealAnswer();
@@ -235,7 +257,7 @@ export const useGameLogic = () => {
     }
     
     return () => clearInterval(interval);
-  }, [isActive, timeLeft, showAnswer, revealAnswer, speak, speechEnabled, canSpeak]);
+  }, [isActive, timeLeft, showAnswer, revealAnswer, speak, speechEnabled, speechInProgress]);
 
   // Auto-start game
   useEffect(() => {

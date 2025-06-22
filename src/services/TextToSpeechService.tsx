@@ -31,115 +31,87 @@ export const TextToSpeechProvider: React.FC<TextToSpeechProviderProps> = ({
   const [isEnabled, setIsEnabled] = useState(false);
   const [isSupported] = useState('speechSynthesis' in window);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const speechQueueRef = useRef<Array<{ text: string; priority: 'high' | 'normal' }>>([]);
-  const isProcessingRef = useRef(false);
+  const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const stopSpeaking = useCallback(() => {
+    console.log('TTS: Stopping all speech');
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel();
       setIsSpeaking(false);
-      speechRef.current = null;
-      speechQueueRef.current = [];
-      isProcessingRef.current = false;
-      console.log('TTS: All speech stopped and queue cleared');
+      currentUtteranceRef.current = null;
     }
   }, []);
 
-  const processQueue = useCallback(async () => {
-    if (isProcessingRef.current || speechQueueRef.current.length === 0 || !isEnabled) {
-      return;
-    }
-
-    isProcessingRef.current = true;
-    const { text, priority } = speechQueueRef.current.shift()!;
-
-    try {
-      console.log('TTS: Processing from queue:', text.substring(0, 50));
-      
-      return new Promise<void>((resolve) => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        speechRef.current = utterance;
-        
-        utterance.lang = "en-US";
-        utterance.pitch = 1;
-        utterance.rate = 0.9;
-        utterance.volume = 1;
-        
-        utterance.onstart = () => {
-          console.log('TTS: Speech started:', text.substring(0, 50));
-          setIsSpeaking(true);
-        };
-        
-        utterance.onerror = (event) => {
-          console.error('TTS: Speech error:', event.error);
-          setIsSpeaking(false);
-          speechRef.current = null;
-          isProcessingRef.current = false;
-          resolve();
-          setTimeout(() => processQueue(), 100);
-        };
-        
-        utterance.onend = () => {
-          console.log('TTS: Speech finished:', text.substring(0, 50));
-          setIsSpeaking(false);
-          speechRef.current = null;
-          isProcessingRef.current = false;
-          resolve();
-          setTimeout(() => processQueue(), 300);
-        };
-        
-        speechSynthesis.speak(utterance);
-        console.log('TTS: Speech synthesis called for:', text.substring(0, 50));
-      });
-    } catch (error) {
-      console.error('TTS error:', error);
-      setIsSpeaking(false);
-      speechRef.current = null;
-      isProcessingRef.current = false;
-    }
-  }, [isEnabled]);
-
   const speak = useCallback(async (text: string, priority: 'high' | 'normal' = 'normal') => {
-    console.log('TTS: Speak requested - enabled:', isEnabled, 'text:', text.substring(0, 50), 'supported:', isSupported);
+    console.log('TTS: Speak called - enabled:', isEnabled, 'text:', text.substring(0, 50));
     
     if (!isEnabled || !text.trim() || !isSupported) {
-      console.log('TTS: Not speaking - enabled:', isEnabled, 'text:', !!text.trim(), 'supported:', isSupported);
+      console.log('TTS: Not speaking - conditions not met');
       return;
     }
 
-    if (priority === 'high') {
-      console.log('TTS: High priority - clearing queue and stopping current speech');
-      speechQueueRef.current = [];
-      if (isSpeaking) {
-        speechSynthesis.cancel();
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+    // If high priority, stop current speech
+    if (priority === 'high' && isSpeaking) {
+      console.log('TTS: High priority - stopping current speech');
+      speechSynthesis.cancel();
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    speechQueueRef.current.push({ text, priority });
-    console.log('TTS: Added to queue. Queue length:', speechQueueRef.current.length);
-    
-    if (!isProcessingRef.current) {
-      await processQueue();
-    }
-  }, [isEnabled, isSupported, isSpeaking, processQueue]);
+    return new Promise<void>((resolve) => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      currentUtteranceRef.current = utterance;
+      
+      utterance.lang = "en-US";
+      utterance.pitch = 1;
+      utterance.rate = 0.9;
+      utterance.volume = 1;
+      
+      utterance.onstart = () => {
+        console.log('TTS: Speech started:', text.substring(0, 50));
+        setIsSpeaking(true);
+      };
+      
+      utterance.onerror = (event) => {
+        console.log('TTS: Speech error (but continuing):', event.error);
+        setIsSpeaking(false);
+        currentUtteranceRef.current = null;
+        resolve();
+      };
+      
+      utterance.onend = () => {
+        console.log('TTS: Speech finished:', text.substring(0, 50));
+        setIsSpeaking(false);
+        currentUtteranceRef.current = null;
+        resolve();
+      };
+      
+      try {
+        speechSynthesis.speak(utterance);
+        console.log('TTS: Speech synthesis started for:', text.substring(0, 50));
+      } catch (error) {
+        console.error('TTS: Error calling speechSynthesis.speak:', error);
+        setIsSpeaking(false);
+        currentUtteranceRef.current = null;
+        resolve();
+      }
+    });
+  }, [isEnabled, isSupported, isSpeaking]);
 
   const speakQuestion = useCallback(async (question: string, options: string[]) => {
-    console.log('TTS: Speaking question request - enabled:', isEnabled, 'supported:', isSupported);
+    console.log('TTS: Speaking question - enabled:', isEnabled);
     
     if (!isEnabled || !isSupported) {
-      console.log('TTS: Not speaking question - not enabled or supported');
+      console.log('TTS: Question speech disabled');
       return;
     }
 
     try {
-      console.log('TTS: Queueing question and options');
-      
-      // Clear any existing queue and speak question with high priority
+      // Speak question first
       await speak(question, 'high');
       
-      // Add options to queue
+      // Wait a bit then speak options
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
       const optionsText = options.map((option, index) => 
         `${String.fromCharCode(65 + index)}: ${option}`
       ).join('. ');
@@ -147,7 +119,7 @@ export const TextToSpeechProvider: React.FC<TextToSpeechProviderProps> = ({
       await speak(`Your options are: ${optionsText}`, 'normal');
       
     } catch (error) {
-      console.error('TTS: Error speaking question and options:', error);
+      console.error('TTS: Error in speakQuestion:', error);
     }
   }, [speak, isEnabled, isSupported]);
 
