@@ -325,12 +325,8 @@ const TriviaGame = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-800 via-blue-900 to-purple-900 p-2 md:p-4 relative flex flex-col">
       <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
-        {/* Header with Score */}
-        <div className="flex justify-between items-center mb-3 md:mb-6">
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-3 py-2 md:px-6 md:py-3 rounded-full font-bold text-lg md:text-2xl shadow-lg">
-            💰 {score}
-          </div>
-          
+        {/* Header with Speech Toggle only */}
+        <div className="flex justify-end items-center mb-3 md:mb-6">
           <Button
             onClick={toggleSpeech}
             variant="ghost"
@@ -346,22 +342,22 @@ const TriviaGame = () => {
         </div>
 
         {currentQuestion && (
-          <div className="space-y-3 md:space-y-6 flex-1 flex flex-col">
-            {/* Host Video Section */}
+          <div className="space-y-3 md:space-y-4 flex-1 flex flex-col">
+            {/* Host Video Section - Increased height */}
             <div className="bg-blue-900/80 rounded-2xl p-3 md:p-6 border border-blue-600/50 backdrop-blur-sm">
-              <div className="bg-gray-800 rounded-xl h-32 md:h-48 flex items-center justify-center mb-3 md:mb-4 overflow-hidden">
+              <div className="bg-gray-800 rounded-xl h-48 md:h-72 flex items-center justify-center mb-3 md:mb-4 overflow-hidden">
                 <img 
                   src="/lovable-uploads/29e12f2f-c724-4eb3-9058-4dee9240fd6d.png" 
                   alt="Host" 
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h2 className="text-white text-sm md:text-xl font-semibold text-center mb-2 leading-tight">
+              <h2 className="text-white text-base md:text-xl font-semibold text-center mb-2 leading-tight">
                 {currentQuestion.question}
               </h2>
             </div>
 
-            {/* Timer - Moved to middle position */}
+            {/* Timer */}
             <div className="bg-blue-900/80 rounded-xl p-3 md:p-4 border border-blue-600/50">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-white font-medium text-sm md:text-base">Time Remaining:</span>
@@ -375,7 +371,7 @@ const TriviaGame = () => {
               />
             </div>
 
-            {/* Answer Options */}
+            {/* Answer Options - Optimized for remaining space */}
             <div className="space-y-2 md:space-y-3 flex-1">
               {currentQuestion.options.map((option, index) => (
                 <button
@@ -406,7 +402,7 @@ const TriviaGame = () => {
                     }`}>
                       {String.fromCharCode(65 + index)}
                     </span>
-                    <span className="text-sm md:text-lg leading-tight">{option}</span>
+                    <span className="text-sm md:text-base leading-tight">{option}</span>
                   </div>
                 </button>
               ))}
