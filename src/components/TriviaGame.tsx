@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Volume2, VolumeX, Play, Pause, Sparkles, Trophy, Target, Zap, Brain } from 'lucide-react';
+import { Volume2, VolumeX, Play, Pause, Sparkles, Trophy, Target, Zap, Brain, Clock } from 'lucide-react';
 
 interface Question {
   question: string;
@@ -418,7 +417,7 @@ const TriviaGame = () => {
               <div className="space-y-4 animate-slide-in-right">
                 <div className="flex justify-between items-center text-white/90 text-lg font-semibold">
                   <span className="flex items-center gap-2">
-                    <clock className="w-5 h-5" />
+                    <Clock className="w-5 h-5" />
                     Time Remaining
                   </span>
                   <span className={`font-mono text-xl ${timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
@@ -530,26 +529,6 @@ const TriviaGame = () => {
               </Card>
             </>
           )}
-        </div>
-
-        {/* Enhanced Footer */}
-        <div className="text-center mt-12 text-white/70 text-lg animate-fade-in">
-          <div className="flex justify-center items-center gap-4 flex-wrap">
-            <span className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-yellow-400" />
-              Unlimited Questions
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-blue-400" />
-              Auto-Advancing
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-2">
-              <Brain className="w-5 h-5 text-purple-400" />
-              Challenge Your Mind
-            </span>
-          </div>
         </div>
       </div>
     </div>
