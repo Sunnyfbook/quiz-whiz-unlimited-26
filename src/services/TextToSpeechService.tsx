@@ -20,74 +20,63 @@ export const useTextToSpeech = () => {
 
 interface TextToSpeechProviderProps {
   children: React.ReactNode;
-  apiKey?: string;
 }
 
 export const TextToSpeechProvider: React.FC<TextToSpeechProviderProps> = ({ 
-  children, 
-  apiKey 
+  children
 }) => {
   const [isEnabled, setIsEnabled] = useState(false);
-  const [isSupported] = useState(true); // ElevenLabs is always supported
+  const [isSupported] = useState(true);
 
   const speak = useCallback(async (text: string) => {
     if (!isEnabled || !text.trim()) return;
 
     try {
-      console.log('TTS: Speaking:', text);
+      console.log('TTS: Speaking with Kokoro:', text);
       
-      if (apiKey) {
-        // Use ElevenLabs API for high-quality TTS
-        const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM', {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'Content-Type': 'application/json',
-            'xi-api-key': apiKey
-          },
-          body: JSON.stringify({
-            text: text,
-            model_id: 'eleven_monolingual_v1',
-            voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.5
-            }
-          })
-        });
+      // Use Kokoro TTS API - it's free and open source
+      const response = await fetch('https://kokoro-api.tech/tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text,
+          voice: 'af_sarah', // Default voice
+          speed: 1.0,
+          format: 'mp3'
+        })
+      });
 
-        if (response.ok) {
-          const audioBlob = await response.blob();
-          const audioUrl = URL.createObjectURL(audioBlob);
-          const audio = new Audio(audioUrl);
-          
-          return new Promise<void>((resolve) => {
-            audio.onended = () => {
-              URL.revokeObjectURL(audioUrl);
-              resolve();
-            };
-            audio.onerror = () => {
-              console.log('Audio playback error, falling back to browser TTS');
-              fallbackTTS(text);
-              resolve();
-            };
-            audio.play().catch(() => {
-              console.log('Audio play failed, falling back to browser TTS');
-              fallbackTTS(text);
-              resolve();
-            });
+      if (response.ok) {
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        return new Promise<void>((resolve) => {
+          audio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            resolve();
+          };
+          audio.onerror = () => {
+            console.log('Kokoro TTS failed, falling back to browser TTS');
+            fallbackTTS(text);
+            resolve();
+          };
+          audio.play().catch(() => {
+            console.log('Audio play failed, falling back to browser TTS');
+            fallbackTTS(text);
+            resolve();
           });
-        } else {
-          throw new Error('ElevenLabs API error');
-        }
+        });
       } else {
-        // Fallback to browser TTS with improved reliability
-        fallbackTTS(text);
+        throw new Error('Kokoro TTS API error');
       }
     } catch (error) {
-      console.log('TTS error, using fallback:', error);
+      console.log('Kokoro TTS error, using browser fallback:', error);
       fallbackTTS(text);
     }
-  }, [isEnabled, apiKey]);
+  }, [isEnabled]);
 
   const fallbackTTS = useCallback((text: string) => {
     if (!('speechSynthesis' in window)) {
@@ -126,7 +115,7 @@ export const TextToSpeechProvider: React.FC<TextToSpeechProviderProps> = ({
     setIsEnabled(prev => {
       const newState = !prev;
       if (newState) {
-        speak("Text to speech enabled!");
+        speak("Kokoro text to speech enabled!");
       }
       return newState;
     });
