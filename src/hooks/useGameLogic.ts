@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useTextToSpeech } from '../services/TextToSpeechService';
 
@@ -23,7 +22,7 @@ export const useGameLogic = () => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [streak, setStreak] = useState(0);
 
-  const { speak, isEnabled: speechEnabled, toggle: toggleSpeech } = useTextToSpeech();
+  const { speak, speakQuestion, isEnabled: speechEnabled, toggle: toggleSpeech, stopSpeaking } = useTextToSpeech();
 
   const triviaQuestions: Question[] = [
     {
@@ -104,24 +103,33 @@ export const useGameLogic = () => {
   }, []);
 
   const loadNewQuestion = useCallback(async () => {
+    console.log('Loading new question...');
     setSelectedAnswer(null);
     setShowConfetti(false);
     setIsCorrect(false);
+    
+    // Stop any current speech before loading new question
+    stopSpeaking();
     
     const newQuestion = getRandomQuestion();
     setCurrentQuestion(newQuestion);
     setShowAnswer(false);
     setTimeLeft(15);
     
+    // Speak the question and answers with a delay to ensure UI is ready
     setTimeout(async () => {
-      if (speechEnabled) {
-        await speak(`${newQuestion.category} question: ${newQuestion.question}`);
+      if (speechEnabled && newQuestion) {
+        console.log('Speaking question and options...');
+        await speakQuestion(newQuestion.question, newQuestion.options);
       }
-    }, 500);
-  }, [getRandomQuestion, speak, speechEnabled]);
+    }, 1000);
+  }, [getRandomQuestion, speakQuestion, speechEnabled, stopSpeaking]);
 
   const revealAnswer = useCallback(async (selectedIndex?: number) => {
     if (!currentQuestion) return;
+    
+    // Stop any current speech
+    stopSpeaking();
     
     setShowAnswer(true);
     setIsActive(false);
@@ -143,13 +151,17 @@ export const useGameLogic = () => {
           "Brilliant! Keep it up!"
         ];
         const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
-        await speak(randomEncouragement);
+        setTimeout(() => {
+          speak(randomEncouragement, 'high');
+        }, 500);
       }
     } else {
       setStreak(0);
       const correctAnswerText = currentQuestion.options[currentQuestion.correctAnswer];
       if (speechEnabled) {
-        await speak(`Not quite right. The correct answer is: ${correctAnswerText}`);
+        setTimeout(() => {
+          speak(`Incorrect. The correct answer is ${String.fromCharCode(65 + currentQuestion.correctAnswer)}: ${correctAnswerText}`, 'high');
+        }, 500);
       }
     }
     
@@ -157,27 +169,38 @@ export const useGameLogic = () => {
       loadNewQuestion();
       setIsActive(true);
     }, 3500);
-  }, [currentQuestion, speak, speechEnabled, loadNewQuestion]);
+  }, [currentQuestion, speak, speechEnabled, loadNewQuestion, stopSpeaking]);
 
   const handleAnswerSelect = useCallback((answerIndex: number) => {
     if (showAnswer || !currentQuestion) return;
     
+    console.log('Answer selected:', answerIndex);
     setSelectedAnswer(answerIndex);
     setIsActive(false);
     
+    // Stop speech when answer is selected
+    stopSpeaking();
+    
+    // Speak the selected answer
+    if (speechEnabled) {
+      const selectedOption = currentQuestion.options[answerIndex];
+      speak(`You selected ${String.fromCharCode(65 + answerIndex)}: ${selectedOption}`, 'high');
+    }
+    
     setTimeout(() => {
       revealAnswer(answerIndex);
-    }, 500);
-  }, [showAnswer, currentQuestion, revealAnswer]);
+    }, 1000);
+  }, [showAnswer, currentQuestion, revealAnswer, speak, speechEnabled, stopSpeaking]);
 
   const enableSpeechAndStart = useCallback(async () => {
+    console.log('Starting game...');
     setGameStarted(true);
     setIsActive(true);
     setTotalQuestions(0);
     setStreak(0);
     
     if (speechEnabled) {
-      await speak("Welcome to Trivia Master! Get ready to test your knowledge!");
+      await speak("Welcome to Trivia Master! Get ready to test your knowledge!", 'high');
     }
     
     setTimeout(() => {
@@ -194,14 +217,14 @@ export const useGameLogic = () => {
         setTimeLeft(timeLeft => {
           const newTime = timeLeft - 1;
           if (newTime === 5 && speechEnabled) {
-            speak("Five seconds remaining!");
+            speak("Five seconds remaining!", 'high');
           }
           return newTime;
         });
       }, 1000);
     } else if (timeLeft === 0 && !showAnswer) {
       if (speechEnabled) {
-        speak("Time's up!");
+        speak("Time's up!", 'high');
       }
       revealAnswer();
     }
